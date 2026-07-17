@@ -13,51 +13,63 @@ class FrameParser {
 
         FrameParser(Callback cb, void* ctx) : state_(), payload_{}, len_(0), got_(0), sum_(0), errors_(0), cb_(cb), ctx_(ctx) {}
 
+        using Handler = void (FrameParser::*)(uint8_t);
+
+        
         void feed(uint8_t byte){
-            switch (state_) {
-                case State::WaitSof:
-                    if (byte == 0xAA) {
-                        sum_ = byte;
-                        state_ = State::WaitLen;
-                    }
-                    break;
-
-                case State::WaitLen:
-                    len_ = byte;
-                    got_ = 0;
-                    sum_ = static_cast<uint8_t>(sum_ + byte);
-                    state_ = (len_ == 0) ? State::WaitSum : State::WaitPayload;
-                    break;
-                    
-                case State::WaitPayload:
-                    payload_[got_] = byte;
-                    got_++;
-                    sum_ = static_cast<uint8_t>(sum_ + byte);
-                    state_ = (got_ == len_) ? State::WaitSum : State::WaitPayload;
-                    break;
-
-                case State::WaitSum:
-                    if(sum_ == byte){
-                        if(cb_) cb_(payload_.data(), len_, ctx_);
-                    }else{
-                        errors_++;
-                    }
-                    state_ = State::WaitSof;
-                    break;
-            }
+            auto handler = state_handlers_[static_cast<size_t>(state_)];
+            (this->*handler)(byte);
         }
-
+        
+        
         unsigned errors() const {return errors_;}
-
+        
     private:
         State state_;
         std::array<uint8_t,255> payload_{};
         uint8_t len_, got_, sum_, errors_;
         Callback cb_;
         void* ctx_;
-};
+        
+        void handle_wait_sof(uint8_t byte){
+            if (byte == 0xAA) {
+                sum_ = byte;
+                state_ = State::WaitLen;
+            }
+        }
+        
+        void handle_wait_len(uint8_t byte){
+            len_ = byte;
+            got_ = 0;
+            sum_ = static_cast<uint8_t>(sum_ + byte);
+            state_ = (len_ == 0) ? State::WaitSum : State::WaitPayload;
+        }
+        
+        void handle_wait_payload(uint8_t byte){
+            payload_[got_] = byte;
+            got_++;
+            sum_ = static_cast<uint8_t>(sum_ + byte);
+            state_ = (got_ == len_) ? State::WaitSum : State::WaitPayload;
+        }
+        
+        void handle_wait_sum(uint8_t byte){
+            if(sum_ == byte){
+                if(cb_) cb_(payload_.data(), len_, ctx_);
+            }else{
+                errors_++;
+            }
+            state_ = State::WaitSof;
+        }
 
-
+        static constexpr std::array<Handler, 4> state_handlers_ = {
+            &FrameParser::handle_wait_sof,
+            &FrameParser::handle_wait_len,
+            &FrameParser::handle_wait_payload,
+            &FrameParser::handle_wait_sum,
+        };
+    };
+    
+    
 void on_frame(const uint8_t* payload, uint8_t len, void* ctx) {
     (void)ctx;
     std::cout << "フレーム受信! len=" << (int)len << " データ: ";

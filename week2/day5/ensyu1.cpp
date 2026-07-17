@@ -39,8 +39,6 @@ class Filter{
         size_t pos_, count_;
 };
 
-#include <iostream>
-
 int main(){
     Filter f(3);
 
