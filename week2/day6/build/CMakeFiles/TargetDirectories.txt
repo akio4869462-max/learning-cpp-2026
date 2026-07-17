@@ -1,0 +1,3 @@
+/home/aptx4/wksp/week2/day6/build/CMakeFiles/main.dir
+/home/aptx4/wksp/week2/day6/build/CMakeFiles/edit_cache.dir
+/home/aptx4/wksp/week2/day6/build/CMakeFiles/rebuild_cache.dir
