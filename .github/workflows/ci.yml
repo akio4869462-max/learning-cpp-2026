@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        working-directory: week3/day5
+        run: cmake -B build
+
+      - name: Build
+        working-directory: week3/day5
+        run: cmake --build build
+
+      - name: Test
+        working-directory: week3/day5
+        run: ctest --test-dir build --output-on-failure
