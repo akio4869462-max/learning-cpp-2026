@@ -108,3 +108,16 @@ TEST(FrameParser, TimeoutDiscardsPartialFrame) {
     EXPECT_EQ(capture.payload, data);
     EXPECT_EQ(fp.errors(), 0u);
 }
+
+TEST(FrameParser, ZeroLengthFrameCallsCallback){
+    CaptureResult capture;
+    FrameParser fp(testCallback, &capture);
+
+    uint8_t sum = 0xAA;
+    fp.feed(0xAA, 0);   // SOF
+    fp.feed(0x00, 1);
+    fp.feed(sum, 2);
+    
+    EXPECT_TRUE(capture.called);
+    EXPECT_EQ(fp.errors(), 0u);
+}
