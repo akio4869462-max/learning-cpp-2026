@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test-day5:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,4 +22,21 @@ jobs:
 
       - name: Test
         working-directory: week3/day5
+        run: ctest --test-dir build --output-on-failure
+
+  test-day6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        working-directory: week3/day6
+        run: cmake -B build
+
+      - name: Build
+        working-directory: week3/day6
+        run: cmake --build build
+
+      - name: Test
+        working-directory: week3/day6
         run: ctest --test-dir build --output-on-failure
