@@ -10,3 +10,4 @@ a.out
 build/
 # 教材本文は非公開(※負パターンより後に書くこと)
 embedded-cpp-1month/*.md
+WorkStudy/*.md
