@@ -2,6 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt, hilbert, find_peaks
 
+def to_brightness(env, dynamic_range_db=60.0):
+    env = env / (env.max() + 1e-12)          # 最大を1に正規化
+    db = 20 * np.log10(env + 1e-12)          # dB化(0 dBが最大)
+    db = np.clip(db, -dynamic_range_db, 0)   # 表示レンジ外を切り捨て
+    return ((db + dynamic_range_db) / dynamic_range_db * 255).astype(np.uint8)
+
 fs = 50e6
 t = np.arange(0, 100e-6, 1 / fs)
 
@@ -26,8 +32,17 @@ peaks, _ = find_peaks(env, height=0.09, distance=10)
 
 print(depth_cm[peaks])
 
+brightness = to_brightness(env, dynamic_range_db=90.0)
+
 # plt.plot(t * 1e6, pulse_filtered)
-plt.plot(depth_cm, env_db)
+# plt.plot(depth_cm, env_db)
+# plt.plot(depth_cm, brightness)
+# plt.xlabel("depth [cm]")
+# plt.title("Hilbert RF signal with noise")
+# plt.savefig("day17_bright_90db.png")
+
+image = np.tile(brightness, (50, 1))  # 50回縦に複製
+plt.imshow(image, cmap="gray", aspect="auto",
+           extent=[depth_cm.min(), depth_cm.max(), 0, 1])
 plt.xlabel("depth [cm]")
-plt.title("Hilbert RF signal with noise")
-plt.savefig("day14_hilbert_db.png")
+plt.savefig("day17_image.png")
